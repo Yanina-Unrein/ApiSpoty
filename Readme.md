@@ -128,7 +128,7 @@ const { authenticate, isAdmin } = require('../middlewares/authenticate');
 
 3. Crea un archivo `.env` basado en `.env.example`:
    ```env
-   PORT=3008
+   DB_PORT=3008
    DB_HOST=localhost
    DB_USER=root
    DB_PASSWORD=tu_clave

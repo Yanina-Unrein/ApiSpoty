@@ -76,15 +76,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Configuración de archivos estáticos con CORS dinámico
-app.use('/public', express.static(path.join(__dirname, 'public'), {
-  setHeaders: (res, path) => {
-    if (path.endsWith('.mp3')) {
+app.use('/public/songs', express.static(path.join(__dirname, 'public', 'songs'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.mp3')) {
       res.setHeader('Content-Type', 'audio/mpeg');
-      res.setHeader('Accept-Ranges', 'bytes');
-      res.setHeader('Cache-Control', 'public, max-age=31536000');
+      res.setHeader('Access-Control-Allow-Origin', '*');
     }
   }
 }));
+
 
 // --------------------- Rutas ---------------------
 
@@ -112,14 +112,21 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/api/check-audio/:filename', (req, res) => {
-  const filePath = path.join(__dirname, 'public', 'songs', req.params.filename);
+app.get('/api/check-song/:filename', (req, res) => {
+  const songPath = path.join(__dirname, 'public', 'songs', req.params.filename);
   
-  fs.access(filePath, fs.constants.F_OK, (err) => {
+  fs.access(songPath, fs.constants.F_OK, (err) => {
     if (err) {
-      return res.status(404).json({ exists: false });
+      return res.status(404).json({ 
+        exists: false,
+        absolutePath: songPath,
+        error: err.message
+      });
     }
-    res.json({ exists: true });
+    res.json({ 
+      exists: true,
+      url: `/public/songs/${req.params.filename}`
+    });
   });
 });
 

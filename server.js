@@ -22,7 +22,7 @@ const app = express();
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
     ? [
-        'https://tu-frontend-vercel.vercel.app' // URL de Vercel
+        'https://spoty-music-clon.vercel.app/' // URL de Vercel
       ]
     : ['http://localhost:4200', 'http://localhost:3000'], // Para desarrollo local
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -51,7 +51,7 @@ app.use('/public', express.static(path.join(__dirname, 'public'), {
       
       // Headers CORS dinámicos
       const allowedOrigins = process.env.NODE_ENV === 'production' 
-        ? ['https://tu-frontend-vercel.vercel.app']
+        ? ['https://spoty-music-clon.vercel.app/']
         : ['http://localhost:4200', 'http://localhost:3000'];
       
       // En producción, usa el origen permitido apropiado

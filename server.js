@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const http = require('http');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs'); // Agregar esta línea que faltaba
 const db = require('./config/db'); 
 const songRoutes = require('./routes/songRoutes'); 
 const authRoutes = require('./routes/authRoutes'); 
@@ -17,9 +18,13 @@ const app = express();
 
 // --------------------- Middlewares ---------------------
 
-// Configuración de CORS
+// Configuración de CORS para producción y desarrollo
 const corsOptions = {
-  origin: 'http://localhost:4200',
+  origin: process.env.NODE_ENV === 'production' 
+    ? [
+        'https://tu-frontend-vercel.vercel.app' // URL de Vercel
+      ]
+    : ['http://localhost:4200', 'http://localhost:3000'], // Para desarrollo local
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['Content-Length', 'Content-Range'], 
@@ -36,21 +41,51 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
+// Configuración de archivos estáticos con CORS dinámico
 app.use('/public', express.static(path.join(__dirname, 'public'), {
   setHeaders: (res, path) => {
     if (path.endsWith('.mp3')) {
       res.setHeader('Content-Type', 'audio/mpeg');
       res.setHeader('Accept-Ranges', 'bytes');
       res.setHeader('Cache-Control', 'public, max-age=31536000');
-      // Headers CORS importantes
-      res.setHeader('Access-Control-Allow-Origin', 'http://localhost:4200');
+      
+      // Headers CORS dinámicos
+      const allowedOrigins = process.env.NODE_ENV === 'production' 
+        ? ['https://tu-frontend-vercel.vercel.app']
+        : ['http://localhost:4200', 'http://localhost:3000'];
+      
+      // En producción, usa el origen permitido apropiado
+      res.setHeader('Access-Control-Allow-Origin', allowedOrigins[0]);
       res.setHeader('Access-Control-Allow-Credentials', 'true');
     }
   }
 }));
 
 // --------------------- Rutas ---------------------
+
+// Ruta de salud para Render
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    message: 'API funcionando correctamente',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Ruta raíz
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'API REST de Música', 
+    version: '1.0.0',
+    endpoints: [
+      '/api/songs',
+      '/api/auth', 
+      '/api/playlists',
+      '/api/favorites',
+      '/api/artists'
+    ]
+  });
+});
 
 app.get('/api/check-audio/:filename', (req, res) => {
   const filePath = path.join(__dirname, 'public', 'songs', req.params.filename);
@@ -86,7 +121,7 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada' });
 });
 
-// Configuración del puerto
+// Configuración del puerto (Render asigna automáticamente el puerto)
 const port = process.env.PORT || 3008;
 app.set('port', port);
 
@@ -119,9 +154,19 @@ server.on('listening', () => {
   const addr = server.address();
   const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
   console.log(`Servidor escuchando en ${bind}`);
+  console.log(`Entorno: ${process.env.NODE_ENV || 'development'}`);
+});
+
+// Manejo graceful de cierre del servidor
+process.on('SIGTERM', () => {
+  console.log('SIGTERM recibido, cerrando servidor...');
+  server.close(() => {
+    console.log('Servidor cerrado correctamente');
+    process.exit(0);
+  });
 });
 
 // Iniciar el servidor
 server.listen(port);
 
-module.exports = app; 
+module.exports = app;

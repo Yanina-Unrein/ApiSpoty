@@ -18,19 +18,53 @@ const app = express();
 
 // --------------------- Middlewares ---------------------
 
+const allowedOrigins = [
+  'https://spoty-music-clon.vercel.app',
+  /https:\/\/spoty-music-clon-.*\.vercel\.app/, // Regex para todos los subdominios
+  'http://localhost:4200'
+];
+
 // Configuración de CORS para producción y desarrollo
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? [
-        'https://spoty-music-clon.vercel.app/' // URL de Vercel
-      ]
-    : ['http://localhost:4200', 'http://localhost:3000'], // Para desarrollo local
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Content-Length', 'Content-Range'], 
-  credentials: true
+  origin: function (origin, callback) {
+    // Permitir solicitudes sin origen (como mobile apps o curl)
+    if (!origin) return callback(null, true);
+    
+    // Verificar contra los orígenes permitidos
+    const originIsAllowed = allowedOrigins.some(allowedOrigin => {
+      if (typeof allowedOrigin === 'string') {
+        return origin === allowedOrigin;
+      } else if (allowedOrigin instanceof RegExp) {
+        return allowedOrigin.test(origin);
+      }
+      return false;
+    });
+    
+    if (originIsAllowed || origin.includes('localhost')) {
+      callback(null, true);
+    } else {
+      console.error(`Origen no permitido por CORS: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true,
+  optionsSuccessStatus: 200,
+  maxAge: 86400
 };
+
 app.use(cors(corsOptions));
+
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+  console.log('Origin:', req.headers.origin);
+  console.log('Headers:', req.headers);
+  next();
+});
+
+// Manejar preflight para todas las rutas
+app.options('*', cors(corsOptions));
 
 // Middleware para loggear todas las peticiones
 app.use((req, res, next) => {
@@ -48,15 +82,6 @@ app.use('/public', express.static(path.join(__dirname, 'public'), {
       res.setHeader('Content-Type', 'audio/mpeg');
       res.setHeader('Accept-Ranges', 'bytes');
       res.setHeader('Cache-Control', 'public, max-age=31536000');
-      
-      // Headers CORS dinámicos
-      const allowedOrigins = process.env.NODE_ENV === 'production' 
-        ? ['https://spoty-music-clon.vercel.app/']
-        : ['http://localhost:4200', 'http://localhost:3000'];
-      
-      // En producción, usa el origen permitido apropiado
-      res.setHeader('Access-Control-Allow-Origin', allowedOrigins[0]);
-      res.setHeader('Access-Control-Allow-Credentials', 'true');
     }
   }
 }));

@@ -22,7 +22,12 @@ router.delete('/:id/delete', authenticate, deletePlaylist);
 router.post('/add-song', authenticate, addSongToPlaylist);
 router.delete('/remove-song/:songId', authenticate, removeSongFromPlaylist);
 
-router.get('/others/:userId', getPlaylistsByOtherUsers); 
+router.get('/others/:userId', (req, res, next) => {
+  if (req.headers['authorization']) {
+    return authenticate(req, res, next);
+  }
+  next();
+}, getPlaylistsByOtherUsers);
 
 
 module.exports = router;

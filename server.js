@@ -11,7 +11,7 @@ const authRoutes = require('./routes/authRoutes');
 const playlistRoutes = require('./routes/playlistRoutes'); 
 const favoritesRoutes = require('./routes/favoritesRoutes'); 
 const artistRoutes = require('./routes/artistRoutes');
-
+const cron = require('node-cron');
 dotenv.config(); // Carga las variables de entorno
 
 const app = express();
@@ -144,6 +144,18 @@ app.use('/api/favorites', favoritesRoutes);
 
 // Rutas de artista
 app.use('/api/artists', artistRoutes);
+
+// ----------------Scripts de limpieza de imágenes en Cloudinary---------------------
+
+cron.schedule('0 3 * * 0', async () => {
+  try {
+    console.log('Iniciando limpieza programada de Cloudinary...');
+    const result = await cleanUpCloudinary(userModel);
+    console.log('Limpieza completada:', result);
+  } catch (error) {
+    console.error('Error en limpieza automática:', error);
+  }
+});
 
 // --------------------- Servidor ---------------------
 

@@ -1,0 +1,117 @@
+<%- include('../partials/header', { title: 'Dashboard' }) %>
+<%- include('../partials/sidebar', { admin: admin }) %>
+
+<div class="col-md-10 col-lg-10 main-content">
+  <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Dashboard</h1>
+  </div>
+
+  <div class="row">
+    <!-- Estadísticas -->
+    <div class="col-md-4">
+      <div class="card stat-card text-white bg-primary">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="card-title">Canciones</h5>
+              <h2 class="card-text"><%= songCount %></h2>
+            </div>
+            <i class="bi bi-music-note-beamed" style="font-size: 3rem;"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4">
+      <div class="card stat-card text-white bg-success">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="card-title">Artistas</h5>
+              <h2 class="card-text"><%= artistCount %></h2>
+            </div>
+            <i class="bi bi-person-badge" style="font-size: 3rem;"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-4">
+      <div class="card stat-card text-white bg-info">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="card-title">Categorías</h5>
+              <h2 class="card-text"><%= categoryCount %></h2>
+            </div>
+            <i class="bi bi-tags" style="font-size: 3rem;"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-4">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title">Últimas canciones</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Título</th>
+                  <th>Artista</th>
+                  <th>Duración</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% lastSongs.forEach(song => { %>
+                  <tr>
+                    <td><%= song.title %></td>
+                    <td><%= song.artist_name %></td>
+                    <td><%= song.duration %></td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+          <a href="/admin/songs" class="btn btn-sm btn-outline-primary">Ver todas</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title">Últimos artistas</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Canciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% lastArtists.forEach(artist => { %>
+                  <tr>
+                    <td><%= artist.name %></td>
+                    <td><%= artist.song_count %></td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+          <a href="/admin/artists" class="btn btn-sm btn-outline-primary">Ver todos</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

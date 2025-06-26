@@ -1,0 +1,57 @@
+<%- include('../../partials/header', { title: 'Crear Canción' }) %>
+<%- include('../../partials/sidebar', { admin: admin }) %>
+
+<div class="col-md-10 col-lg-10 main-content mt-4">
+  <h1>Crear Nueva Canción</h1>
+
+  <% if (error_msg) { %>
+    <div class="alert alert-danger"><%= error_msg %></div>
+  <% } %>
+
+  <form action="/admin/songs/create" method="POST">
+    <div class="mb-3">
+      <label class="form-label">Título</label>
+      <input type="text" name="title" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Álbum</label>
+      <input type="text" name="album" class="form-control">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Duración</label>
+      <input type="text" name="duration" class="form-control" placeholder="3:45" required>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Artistas</label>
+      <select name="artistIds" class="form-control" multiple required>
+        <% artists.forEach(artist => { %>
+          <option value="<%= artist.id %>"><%= artist.name %></option>
+        <% }) %>
+      </select>
+      <small class="form-text text-muted">Presioná Ctrl (Windows) o Cmd (Mac) para seleccionar múltiples.</small>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Categorías</label>
+      <select name="categoryIds" class="form-control" multiple>
+        <% categories.forEach(category => { %>
+          <option value="<%= category.id %>"><%= category.name %></option>
+        <% }) %>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Nombre del archivo MP3 (sin ruta)</label>
+      <input type="text" name="path_song" class="form-control" placeholder="ej: mi-cancion.mp3" required>
+      <small class="form-text text-muted">El archivo debe estar en /public/songs/</small>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Crear Canción</button>
+    <a href="/admin/songs" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+
+<%- include('../../partials/footer') %>

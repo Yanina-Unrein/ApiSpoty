@@ -1,6 +1,113 @@
 // models/songModel.js
 const db = require('../config/db');
 
+const createSong = async (songData) => {
+  try {
+    const { title, album, path_song, image_path, duration, artistIds, categoryIds } = songData;
+
+    // Insertar canción
+    const [result] = await db.execute(
+      `INSERT INTO song (title, album, path_song, image_path, duration) 
+       VALUES (?, ?, ?, ?, ?)`,
+      [title, album, path_song, image_path, duration]
+    );
+
+    const songId = result.insertId;
+
+    // Asociar artistas
+    if (artistIds && artistIds.length > 0) {
+      for (const artistId of artistIds) {
+        await db.execute(
+          'INSERT INTO song_artist (song_id, artist_id) VALUES (?, ?)',
+          [songId, artistId]
+        );
+      }
+    }
+
+    // Asociar categorías
+    if (categoryIds && categoryIds.length > 0) {
+      for (const categoryId of categoryIds) {
+        await db.execute(
+          'INSERT INTO song_category (song_id, category_id) VALUES (?, ?)',
+          [songId, categoryId]
+        );
+      }
+    }
+
+    return { id: songId, ...songData };
+  } catch (error) {
+    console.error('Error al crear canción:', error);
+    throw error;
+  }
+};
+
+// Actualizar una canción
+const updateSong = async (songId, songData) => {
+  try {
+    const { title, album, path_song, image_path, duration, artistIds, categoryIds } = songData;
+
+    // Actualizar canción
+    const [result] = await db.execute(
+      `UPDATE song 
+       SET title = ?, album = ?, path_song = ?, image_path = ?, duration = ?
+       WHERE id = ?`,
+      [title, album, path_song, image_path, duration, songId]
+    );
+
+    if (result.affectedRows === 0) {
+      throw new Error('Canción no encontrada');
+    }
+
+    // Actualizar artistas
+    await db.execute('DELETE FROM song_artist WHERE song_id = ?', [songId]);
+    if (artistIds && artistIds.length > 0) {
+      for (const artistId of artistIds) {
+        await db.execute(
+          'INSERT INTO song_artist (song_id, artist_id) VALUES (?, ?)',
+          [songId, artistId]
+        );
+      }
+    }
+
+    // Actualizar categorías
+    await db.execute('DELETE FROM song_category WHERE song_id = ?', [songId]);
+    if (categoryIds && categoryIds.length > 0) {
+      for (const categoryId of categoryIds) {
+        await db.execute(
+          'INSERT INTO song_category (song_id, category_id) VALUES (?, ?)',
+          [songId, categoryId]
+        );
+      }
+    }
+
+    return { id: songId, ...songData };
+  } catch (error) {
+    console.error('Error al actualizar canción:', error);
+    throw error;
+  }
+};
+
+// Eliminar una canción
+const deleteSong = async (songId) => {
+  try {
+    // Eliminar relaciones
+    await db.execute('DELETE FROM song_artist WHERE song_id = ?', [songId]);
+    await db.execute('DELETE FROM song_category WHERE song_id = ?', [songId]);
+
+    // Eliminar canción
+    const [result] = await db.execute('DELETE FROM song WHERE id = ?', [songId]);
+    
+    if (result.affectedRows === 0) {
+      throw new Error('Canción no encontrada');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error al eliminar canción:', error);
+    throw error;
+  }
+};
+
 // Obtener todas las canciones con sus datos asociados (artista, categoría, playlist)
 const getAllSongs = async () => {
   try {
@@ -153,6 +260,9 @@ const searchSongs = async (title, artist) => {
 };
 
 module.exports = {
+  createSong,
+  updateSong,
+  deleteSong,
   getAllSongs,
   getSongById,
   addSong,

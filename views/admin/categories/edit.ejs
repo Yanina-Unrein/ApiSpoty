@@ -1,0 +1,11 @@
+<h2 class="mb-4"><%= title %></h2>
+
+<form method="POST" action="/admin/categories/update/<%= category.id %>">
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <input type="text" class="form-control" name="name" value="<%= category.name %>" required>
+    </div>
+    
+    <button type="submit" class="btn btn-primary">Actualizar Categoría</button>
+    <a href="/admin/categories" class="btn btn-secondary">Cancelar</a>
+</form>

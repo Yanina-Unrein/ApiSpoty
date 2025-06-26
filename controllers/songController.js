@@ -1,6 +1,65 @@
 // controllers/songController.js
 const songModel = require('../models/songModel');
 
+const createSong = async (req, res) => {
+  try {
+    let { title, album, duration, artistIds, categoryIds } = req.body;
+
+    artistIds = Array.isArray(artistIds) ? artistIds : [artistIds];
+    categoryIds = Array.isArray(categoryIds) ? categoryIds : (categoryIds ? [categoryIds] : []);
+
+    const newSong = await songModel.createSong({
+      title,
+      album,
+      duration,
+      path_song: '', 
+      image_path: '', 
+      artistIds,
+      categoryIds
+    });
+
+    req.flash('success_msg', 'Canción creada exitosamente');
+    res.redirect('/admin/songs');
+  } catch (error) {
+    console.error('Error al crear canción:', error);
+    req.flash('error_msg', 'Error al crear canción');
+    res.redirect('/admin/songs/create');
+  }
+};
+
+// Actualizar una canción
+const updateSong = async (req, res) => {
+  try {
+    const songId = req.params.id;
+    const songData = req.body;
+    const updatedSong = await songModel.updateSong(songId, songData);
+    res.json(updatedSong);
+    req.flash('success_msg', 'Canción actualizada exitosamente');
+    res.redirect('/admin/songs');
+  } catch (error) {
+    console.error('Error al actualizar canción:', error);
+    res.status(500).json({ error: 'Error al actualizar canción' });
+    req.flash('error_msg', 'Error al actualizar canción: ' + error.message);
+    res.redirect(`/admin/songs/edit/${req.params.id}`);
+  }
+};
+
+// Eliminar una canción
+const deleteSong = async (req, res) => {
+  try {
+    const songId = req.params.id;
+    await songModel.deleteSong(songId);
+    res.json({ message: 'Canción eliminada exitosamente' });
+    req.flash('success_msg', 'Canción eliminada exitosamente');
+    res.redirect('/admin/songs');
+  } catch (error) {
+    console.error('Error al eliminar canción:', error);
+    res.status(500).json({ error: 'Error al eliminar canción' });
+     req.flash('error_msg', 'Error al eliminar canción: ' + error.message);
+    res.redirect('/admin/songs');
+  }
+};
+
 // Obtener todas las canciones con sus datos asociados (artista, categoría, playlist)
 const getAllSongs = async (req, res) => {
   try {
@@ -56,9 +115,31 @@ const searchSongs = async (req, res) => {
   }
 };
 
+const renderAdminSongs = async (req, res) => {
+  try {
+    const songs = await songModel.getAllSongs();
+
+    res.render('admin/songs/list', {
+      title: 'Canciones',
+      songs,
+      admin: req.session.admin,
+      totalPages: 1, // si no estás paginando aún
+      currentPage: 1
+    });
+  } catch (error) {
+    console.error('Error al mostrar las canciones en el panel admin:', error);
+    req.flash('error_msg', 'Error al cargar las canciones');
+    res.redirect('/admin');
+  }
+};
+
 module.exports = {
+  createSong,
+  updateSong,
+  deleteSong,
   getAllSongs,
   getSongById,
   addSong,
   searchSongs,
+  renderAdminSongs
 };

@@ -52,18 +52,24 @@ const deleteFromCloudinary = async (url) => {
 };
 
 const cleanUpCloudinary = async (userModel) => {
-  const users = await userModel.getAllUsers();
-  const usedImages = users.map(u => u.profile_image).filter(Boolean);
-  
-  const folderResources = await cloudinary.api.resources({
-    type: 'upload',
-    prefix: 'spotify-clone/profiles/'
-  });
+  try {
+    const users = await userModel.getAllUsers();
+    const usedImages = users.map(u => u.profile_image).filter(Boolean);
+    
+    const { resources } = await cloudinary.api.resources({
+      type: 'upload',
+      prefix: 'spotify-clone/profiles/',
+      max_results: 500
+    });
 
-  for (const resource of folderResources.resources) {
-    if (!usedImages.includes(resource.secure_url)) {
-      await cloudinary.uploader.destroy(resource.public_id);
+    for (const resource of resources) {
+      if (!usedImages.includes(resource.secure_url)) {
+        await cloudinary.uploader.destroy(resource.public_id);
+        console.log(`Deleted unused image: ${resource.public_id}`);
+      }
     }
+  } catch (error) {
+    console.error('Error cleaning Cloudinary:', error);
   }
 };
 

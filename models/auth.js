@@ -8,8 +8,8 @@ const crypto = require('crypto');
 const createUser = async (first_name, last_name, username, email, password) => {
   const hashedPassword = await bcrypt.hash(password, 10);
   const [result] = await db.execute(
-    `INSERT INTO user (first_name, last_name, username, email, password) 
-     VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO user (first_name, last_name, username, email, password, role) 
+     VALUES (?, ?, ?, ?, ?, 'user')`,
     [first_name, last_name, username, email, hashedPassword]
   );
   return result;
@@ -30,7 +30,10 @@ const verifyUser = async (email, password) => {
     throw new Error('Credenciales inválidas');
   }
 
-  return user;
+  return {
+    ...user,
+      role: user.role || 'user'
+  };
 };
 
 // Manejo de reseteo de contraseña

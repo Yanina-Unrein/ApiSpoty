@@ -2,6 +2,43 @@
 const artistModel = require('../models/artist');
 const songModel = require('../models/songModel')
 
+// Crear un nuevo artista
+const createArtist = async (req, res) => {
+  try {
+    const { name, photo } = req.body;
+    const newArtist = await artistModel.createArtist(name, photo);
+    res.status(201).json(newArtist);
+  } catch (error) {
+    console.error('Error al crear artista:', error);
+    res.status(500).json({ error: 'Error al crear artista' });
+  }
+};
+
+// Actualizar un artista
+const updateArtist = async (req, res) => {
+  try {
+    const artistId = req.params.id;
+    const { name, photo } = req.body;
+    const updatedArtist = await artistModel.updateArtist(artistId, name, photo);
+    res.json(updatedArtist);
+  } catch (error) {
+    console.error('Error al actualizar artista:', error);
+    res.status(500).json({ error: 'Error al actualizar artista' });
+  }
+};
+
+// Eliminar un artista
+const deleteArtist = async (req, res) => {
+  try {
+    const artistId = req.params.id;
+    await artistModel.deleteArtist(artistId);
+    res.json({ message: 'Artista eliminado exitosamente' });
+  } catch (error) {
+    console.error('Error al eliminar artista:', error);
+    res.status(500).json({ error: 'Error al eliminar artista' });
+  }
+};
+
 // Obtener todos los artistas con sus canciones
 const getArtists = async (req, res) => {
   try {
@@ -57,8 +94,6 @@ const getArtistsByName = async (req, res) => {
   }
 };
 
-
-
 // Obtener canciones de un artista por ID
 const getSongsByArtist = async (req, res) => {
   try {
@@ -77,8 +112,10 @@ const getSongsByArtist = async (req, res) => {
   }
 };
 
-
 module.exports = {
+  createArtist,
+  updateArtist,
+  deleteArtist,
   getArtists,
   getArtistById,
   getArtistsByName,

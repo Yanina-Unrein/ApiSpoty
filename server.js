@@ -4,30 +4,40 @@ const bodyParser = require('body-parser');
 const http = require('http');
 const cors = require('cors');
 const path = require('path');
-const fs = require('fs'); // Agregar esta línea que faltaba
+const fs = require('fs'); 
 const db = require('./config/db'); 
+const cron = require('node-cron');
+const cloudinary = require('cloudinary').v2;
+const methodOverride = require('method-override');
+
 const songRoutes = require('./routes/songRoutes'); 
 const authRoutes = require('./routes/authRoutes'); 
 const playlistRoutes = require('./routes/playlistRoutes'); 
 const favoritesRoutes = require('./routes/favoritesRoutes'); 
 const artistRoutes = require('./routes/artistRoutes');
-const cron = require('node-cron');
-dotenv.config(); // Carga las variables de entorno
+const userRoutes = require('./routes/userRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
 
+
+const { cleanUpCloudinary } = require('./services/cloudinary.service');
+const userModel = require('./models/user');
+
+dotenv.config();
 const app = express();
 
 // --------------------- Middlewares ---------------------
 
 const allowedOrigins = [
   'https://spoty-music-clon.vercel.app',
-  /https:\/\/spoty-music-clon-.*\.vercel\.app/, // Regex para todos los subdominios
-  'http://localhost:4200'
+  /https:\/\/spoty-music-clon-.*\.vercel\.app/,
+  'http://localhost:4200',
+  'http://localhost:3000'
 ];
 
 // Configuración de CORS para producción y desarrollo
 const corsOptions = {
   origin: function (origin, callback) {
-    // Permitir solicitudes sin origen (como mobile apps o curl)
     if (!origin) return callback(null, true);
     
     // Verificar contra los orígenes permitidos
@@ -59,7 +69,7 @@ app.use(cors(corsOptions));
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
   console.log('Origin:', req.headers.origin);
-  console.log('Headers:', req.headers);
+  console.log('User-Agent:', req.headers['user-agent']);
   next();
 });
 
@@ -75,6 +85,44 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Configurar EJS como motor de plantillas
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Configurar sesiones para autenticación
+const session = require('express-session');
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'clave-secreta-en-desarrollo',
+  resave: true,
+  saveUninitialized: true,
+  cookie: {
+    secure: isProduction,              
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000,      
+    sameSite: isProduction ? 'none' : 'lax' 
+  }
+}));
+
+// Middleware para mensajes flash
+const flash = require('connect-flash');
+app.use(flash());
+app.use((req, res, next) => {
+  res.locals.success_msg = req.flash('success_msg');
+  res.locals.error_msg = req.flash('error_msg');
+  next();
+});
+
+// Middleware para verificar sesión de admin
+const checkAdminSession = (req, res, next) => {
+  if (req.session.admin) { 
+    next();
+  } else {
+    res.redirect('/admin/login');
+  }
+};
+
 // Configuración de archivos estáticos con CORS dinámico
 app.use('/public/songs', express.static(path.join(__dirname, 'public', 'songs'), {
   setHeaders: (res, filePath) => {
@@ -85,7 +133,6 @@ app.use('/public/songs', express.static(path.join(__dirname, 'public', 'songs'),
   }
 }));
 
-
 // --------------------- Rutas ---------------------
 
 // Ruta de salud para Render
@@ -93,7 +140,10 @@ app.get('/health', (req, res) => {
   res.status(200).json({ 
     status: 'OK', 
     message: 'API funcionando correctamente',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    database: `${process.env.DB_USER}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`,
+    cloudinary: process.env.CLOUDINARY_CLOUD_NAME ? 'configured' : 'not configured'
   });
 });
 
@@ -103,11 +153,14 @@ app.get('/', (req, res) => {
     message: 'API REST de Música', 
     version: '1.0.0',
     endpoints: [
+      '/admin',
       '/api/songs',
       '/api/auth', 
+      '/api/user',
       '/api/playlists',
       '/api/favorites',
-      '/api/artists'
+      '/api/artists',
+      '/api/categories'
     ]
   });
 });
@@ -130,11 +183,17 @@ app.get('/api/check-song/:filename', (req, res) => {
   });
 });
 
+
+app.use('/admin', adminRoutes);
+
 // Rutas de canciones
 app.use('/api/songs', songRoutes);
 
 // Rutas de autenticación
 app.use('/api/auth', authRoutes);
+
+// Rutas de perfil usuario
+app.use('/api/user', userRoutes);
 
 // Rutas de playlists
 app.use('/api/playlists', playlistRoutes);
@@ -144,6 +203,9 @@ app.use('/api/favorites', favoritesRoutes);
 
 // Rutas de artista
 app.use('/api/artists', artistRoutes);
+
+app.use('/api/categories', categoryRoutes);
+
 
 // ----------------Scripts de limpieza de imágenes en Cloudinary---------------------
 
@@ -157,60 +219,53 @@ cron.schedule('0 3 * * 0', async () => {
   }
 });
 
-// --------------------- Servidor ---------------------
+// --------------------- Configuración del Servidor ---------------------
 
-// Middleware para rutas no encontradas
-app.use((req, res) => {
-  console.log('Ruta no encontrada:', req.originalUrl);
-  res.status(404).json({ error: 'Ruta no encontrada' });
-});
-
-// Configuración del puerto (Render asigna automáticamente el puerto)
 const port = process.env.PORT || 3008;
-app.set('port', port);
-
-// Crear servidor HTTP
 const server = http.createServer(app);
 
 // Manejo de errores al iniciar el servidor
 server.on('error', (error) => {
-  if (error.syscall !== 'listen') {
-    throw error;
-  }
-
-  const bind = typeof port === 'string' ? `Pipe ${port}` : `Port ${port}`;
+  if (error.syscall !== 'listen') throw error;
+  
+  const bind = `Port ${port}`;
+  
   switch (error.code) {
     case 'EACCES':
-      console.error(`${bind} requiere privilegios elevados.`);
+      console.error(`❌ ${bind} requiere privilegios elevados.`);
       process.exit(1);
-      break;
     case 'EADDRINUSE':
-      console.error(`${bind} ya está en uso.`);
+      console.error(`❌ ${bind} ya está en uso.`);
       process.exit(1);
-      break;
     default:
       throw error;
   }
 });
 
-// Confirmación de que el servidor está escuchando
-server.on('listening', () => {
-  const addr = server.address();
-  const bind = typeof addr === 'string' ? `pipe ${addr}` : `port ${addr.port}`;
-  console.log(`Servidor escuchando en ${bind}`);
-  console.log(`Entorno: ${process.env.NODE_ENV || 'development'}`);
+// Iniciar servidor
+server.listen(port, () => {
+  console.log(`🚀 Servidor escuchando en puerto ${port}`);
+  console.log(`🌍 Entorno: ${process.env.NODE_ENV}`);
+  console.log(`🗃️  Base de datos: ${process.env.DB_USER}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`);
+  console.log(`☁️  Cloudinary: ${process.env.CLOUDINARY_CLOUD_NAME}`);
 });
 
-// Manejo graceful de cierre del servidor
-process.on('SIGTERM', () => {
-  console.log('SIGTERM recibido, cerrando servidor...');
+// Manejo graceful de cierre
+const shutdown = (signal) => {
+  console.log(`\n🛑 Recibida señal ${signal}, cerrando servidor...`);
   server.close(() => {
-    console.log('Servidor cerrado correctamente');
+    console.log('👋 Servidor cerrado correctamente');
     process.exit(0);
   });
-});
+  
+  // Forzar cierre después de 10 segundos
+  setTimeout(() => {
+    console.error('⏰ Tiempo de espera agotado, forzando cierre...');
+    process.exit(1);
+  }, 10000);
+};
 
-// Iniciar el servidor
-server.listen(port);
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
 
 module.exports = app;

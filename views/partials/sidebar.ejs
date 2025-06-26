@@ -1,0 +1,47 @@
+<!-- Sidebar -->
+<div class="col-md-2 col-lg-2 sidebar p-0">
+  <div class="d-flex flex-column p-3">
+    <a href="/admin" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+      <span class="fs-4">Spotify Admin</span>
+    </a>
+    <hr>
+    <ul class="nav nav-pills flex-column mb-auto">
+      <li class="nav-item">
+        <a href="/admin" class="nav-link <%= title === 'Dashboard' ? 'active' : 'link-light' %>">
+          <i class="bi bi-speedometer2 me-2"></i>
+          Dashboard
+        </a>
+      </li>
+      <li>
+        <a href="/admin/songs" class="nav-link <%= title.includes('Canciones') ? 'active' : 'link-light' %>">
+          <i class="bi bi-music-note-list me-2"></i>
+          Canciones
+        </a>
+      </li>
+      <li>
+        <a href="/admin/artists" class="nav-link <%= title.includes('Artistas') ? 'active' : 'link-light' %>">
+          <i class="bi bi-person-badge me-2"></i>
+          Artistas
+        </a>
+      </li>
+      <li>
+        <a href="/admin/categories" class="nav-link <%= title.includes('Categorías') ? 'active' : 'link-light' %>">
+          <i class="bi bi-tags me-2"></i>
+          Categorías
+        </a>
+      </li>
+    </ul>
+    <hr>
+    <div class="dropdown">
+      <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+        <img src="https://ui-avatars.com/api/?name=<%= admin.name %>&background=random" alt="" width="32" height="32" class="rounded-circle me-2">
+        <strong><%= admin.name %></strong>
+      </a>
+      <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
+        <li><a class="dropdown-item" href="#">Perfil</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="/admin/logout">Cerrar sesión</a></li>
+      </ul>
+    </div>
+  </div>
+</div>

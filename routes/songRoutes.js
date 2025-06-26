@@ -1,5 +1,5 @@
 const express = require('express');
-const { getAllSongs, getSongById, addSong, searchSongs } = require('../controllers/songController');
+const { createSong, updateSong, deleteSong, getAllSongs, getSongById, addSong, searchSongs } = require('../controllers/songController');
 
 const router = express.Router();
 
@@ -41,5 +41,14 @@ router.get('/check/:filename', async (req, res) => {
     res.json({ exists: false });
   }
 });
+
+// Crear una nueva canción
+router.post('/create', createSong);
+
+// Actualizar una canción
+router.put('/update/:id', updateSong);
+
+// Eliminar una canción
+router.delete('/delete/:id', deleteSong);
 
 module.exports = router;

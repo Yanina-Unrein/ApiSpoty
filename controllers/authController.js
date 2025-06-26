@@ -10,9 +10,12 @@ const {
 } = require('../models/auth');
 
 // Generar token JWT (ya está correctamente definida)
-const generateAuthToken = (userId) => {
+const generateAuthToken = (user) => {
   return jwt.sign(
-    { userId },
+    { 
+      userId: user.id,
+      role: user.role 
+    },
     process.env.JWT_SECRET_KEY,
     { expiresIn: '24h' }
   );
@@ -29,26 +32,35 @@ const register = async (req, res) => {
     }
 
     const result = await createUser(first_name, last_name, username, email, password);
-    const token = generateAuthToken(result.insertId);
     
+    // Obtener usuario recién creado
+    const [users] = await db.execute('SELECT * FROM user WHERE id = ?', [result.insertId]);
+    const newUser = users[0];
+    
+    const token = generateAuthToken(newUser);
+
     res.status(201).json({
       message: 'Usuario registrado exitosamente',
       token,
       user: {
-        id: result.insertId,
-        first_name,
-        last_name,
-        username,
-        email
+        id: newUser.id,
+        first_name: newUser.first_name,
+        last_name: newUser.last_name,
+        username: newUser.username,
+        email: newUser.email,
+        role: newUser.role,
+        profile_image: newUser.profile_image
       }
     });
   } catch (error) {
     if (error.code === 'ER_DUP_ENTRY') {
       return res.status(400).json({ error: 'El email o username ya está en uso' });
     }
+    console.error('Error en registro:', error);
     res.status(500).json({ error: 'Error al registrar usuario' });
   }
 };
+
 
 // Login
 const login = async (req, res) => {
@@ -60,8 +72,7 @@ const login = async (req, res) => {
     }
 
     const user = await verifyUser(email, password);
-    
-    const token = generateAuthToken(user.id);
+    const token = generateAuthToken(user);
 
     res.json({
       message: 'Login exitoso',
@@ -71,7 +82,9 @@ const login = async (req, res) => {
         first_name: user.first_name,
         last_name: user.last_name,
         username: user.username,
-        email: user.email
+        email: user.email,
+        role: user.role,
+        profile_image: user.profile_image
       }
     });
 
@@ -101,7 +114,6 @@ const forgotPassword = async (req, res) => {
       await sendResetEmail(user.email, token, user.first_name);
     }
 
-    // Siempre devuelve éxito para no revelar qué emails existen
     res.json({ 
       message: 'Si el email existe en nuestro sistema, recibirás un enlace para resetear tu contraseña' 
     });

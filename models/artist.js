@@ -1,5 +1,54 @@
 const db = require('../config/db');
 
+const createArtist = async (name, photoUrl) => {
+  try {
+    const [result] = await db.execute(
+      'INSERT INTO artist (name, photo) VALUES (?, ?)',
+      [name, photoUrl]
+    );
+
+    return { id: result.insertId, name, photo: photoUrl };
+  } catch (error) {
+    console.error('Error al crear artista:', error);
+    throw error;
+  }
+};
+
+// Actualizar un artista
+const updateArtist = async (artistId, name, photoUrl) => {
+  try {
+    const [result] = await db.execute(
+      'UPDATE artist SET name = ?, photo = ? WHERE id = ?',
+      [name, photoUrl, artistId]
+    );
+
+    if (result.affectedRows === 0) {
+      throw new Error('Artista no encontrado');
+    }
+
+    return { id: artistId, name, photo: photoUrl };
+  } catch (error) {
+    console.error('Error al actualizar artista:', error);
+    throw error;
+  }
+};
+
+// Eliminar un artista
+const deleteArtist = async (artistId) => {
+  try {
+    const [result] = await db.execute('DELETE FROM artist WHERE id = ?', [artistId]);
+    
+    if (result.affectedRows === 0) {
+      throw new Error('Artista no encontrado');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error al eliminar artista:', error);
+    throw error;
+  }
+};
+
 // Obtener todos los artistas con sus canciones
 const getArtistsWithSongs = async () => {
   const [results] = await db.execute(`
@@ -150,9 +199,18 @@ const getSongsByArtist = async (artistId) => {
   }
 };
 
+async function getAllArtists() {
+  const [rows] = await db.execute('SELECT id, name FROM artist ORDER BY name ASC');
+  return rows;
+}
+
 module.exports = {
+  createArtist,
+  updateArtist,
+  deleteArtist,
   getArtistsWithSongs,
   getArtistByIdWithSongs,
   getArtistsByName,
   getSongsByArtist,
+  getAllArtists
 };

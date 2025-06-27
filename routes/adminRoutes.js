@@ -45,7 +45,7 @@ router.post('/artists/update/:id',adminAuth, artistController.updateArtist);
 router.post('/artists/delete/:id',adminAuth, artistController.deleteArtist);
 
 // Rutas para categorías
-router.get('/categories',adminAuth, categoryController.getAllCategories);
+router.get('/categories',adminAuth, adminController.showCategories);
 router.get('/categories/create',adminAuth, adminController.showCreateCategoryForm);
 router.post('/categories/create',adminAuth, categoryController.createCategory);
 router.get('/categories/edit/:id',adminAuth, adminController.showEditCategoryForm);

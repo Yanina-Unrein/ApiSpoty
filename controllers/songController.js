@@ -3,7 +3,7 @@ const songModel = require('../models/songModel');
 
 const createSong = async (req, res) => {
   try {
-    let { title, album, duration, artistIds, categoryIds } = req.body;
+    let { title, album, duration, path_song, image_path, artistIds, categoryIds } = req.body;
 
     artistIds = Array.isArray(artistIds) ? artistIds : [artistIds];
     categoryIds = Array.isArray(categoryIds) ? categoryIds : (categoryIds ? [categoryIds] : []);
@@ -12,8 +12,8 @@ const createSong = async (req, res) => {
       title,
       album,
       duration,
-      path_song: '', 
-      image_path: '', 
+      path_song,       
+      image_path,      
       artistIds,
       categoryIds
     });
@@ -49,14 +49,12 @@ const deleteSong = async (req, res) => {
   try {
     const songId = req.params.id;
     await songModel.deleteSong(songId);
-    res.json({ message: 'Canción eliminada exitosamente' });
     req.flash('success_msg', 'Canción eliminada exitosamente');
-    res.redirect('/admin/songs');
+    return res.redirect('/admin/songs');
   } catch (error) {
     console.error('Error al eliminar canción:', error);
-    res.status(500).json({ error: 'Error al eliminar canción' });
-     req.flash('error_msg', 'Error al eliminar canción: ' + error.message);
-    res.redirect('/admin/songs');
+    req.flash('error_msg', 'Error al eliminar canción');
+    return res.redirect('/admin/songs');
   }
 };
 

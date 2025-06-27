@@ -142,7 +142,10 @@ const showEditSongForm = (req, res) => {
 };
 
 const showCreateArtistForm = (req, res) => {
-  res.render('admin/artists/create', { title: 'Crear Artista' });
+  res.render('admin/artists/create', { 
+    title: 'Crear Artista',
+    admin: req.session.admin 
+  });
 };
 
 const showEditArtistForm = (req, res) => {
@@ -169,7 +172,26 @@ const showArtists = async (req, res) => {
 };
 
 const showCreateCategoryForm = (req, res) => {
-  res.render('admin/category/create', { title: 'Crear Categoria' });
+  res.render('admin/category/create', {
+    title: 'Crear Categoria',
+    admin: req.session.admin
+  });
+};
+
+const showCategories = async (req, res) => {
+  try {
+    const categories = await categoryModel.getAllCategories();
+
+    res.render('admin/category/list', {
+      title: 'Categorías',
+      categories,
+      admin: req.session.admin
+    });
+  } catch (error) {
+    console.error('Error al mostrar categorías:', error);
+    req.flash('error_msg', 'Error al cargar las categorías');
+    res.redirect('/admin');
+  }
 };
 
 const showEditCategoryForm = (req, res) => {
@@ -190,5 +212,6 @@ module.exports = {
   showEditArtistForm,
   showCreateCategoryForm,
   showEditCategoryForm,
-  showArtists
+  showArtists,
+  showCategories
 };

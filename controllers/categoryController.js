@@ -58,10 +58,12 @@ const deleteCategory = async (req, res) => {
   try {
     const categoryId = req.params.id;
     await categoryModel.deleteCategory(categoryId);
-    res.json({ message: 'Categoría eliminada exitosamente' });
+    req.flash('success_msg', 'Categoría eliminada exitosamente');
+    return res.redirect('/admin/categories');
   } catch (error) {
     console.error('Error al eliminar categoría:', error);
-    res.status(500).json({ error: 'Error al eliminar categoría' });
+    req.flash('error_msg', 'Error al eliminar categoría');
+    return res.redirect('/admin/categories');
   }
 };
 

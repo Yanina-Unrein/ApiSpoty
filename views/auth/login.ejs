@@ -1,18 +1,19 @@
 <%- include('../partials/header', { title: 'Login' }) %>
 
 <div class="row justify-content-center align-items-center" style="height: 100vh;">
+  <% if (success_msg && success_msg.length > 0) { %>
+    <div class="alert alert-success"><%= success_msg[0] %></div>
+  <% } %>
+  <% if (error_msg && error_msg.length > 0) { %>
+    <div class="alert alert-danger"><%= error_msg[0] %></div>
+  <% } %>
   <div class="col-md-5">
     <div class="card shadow-lg">
       <div class="card-body p-5">
         <div class="text-center mb-4">
           <h2 class="fw-bold">Panel Administrativo</h2>
           <p class="text-muted">Spotify Clone</p>
-        </div>
-        
-        <% if (error_msg) { %>
-          <div class="alert alert-danger"><%= error_msg %></div>
-        <% } %>
-        
+        </div> 
         <form action="/admin/login" method="POST">
           <div class="mb-3">
             <label for="email" class="form-label">Email</label>

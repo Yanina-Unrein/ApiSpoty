@@ -32,10 +32,12 @@ const deleteArtist = async (req, res) => {
   try {
     const artistId = req.params.id;
     await artistModel.deleteArtist(artistId);
-    res.json({ message: 'Artista eliminado exitosamente' });
+    req.flash('success_msg', 'Artista eliminado exitosamente');
+    return res.redirect('/admin/artists');
   } catch (error) {
     console.error('Error al eliminar artista:', error);
-    res.status(500).json({ error: 'Error al eliminar artista' });
+    req.flash('error_msg', 'Error al eliminar artista');
+    return res.redirect('/admin/artists');
   }
 };
 

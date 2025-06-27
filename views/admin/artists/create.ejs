@@ -1,16 +1,28 @@
-<h2 class="mb-4"><%= title %></h2>
+<%- include('../../partials/header', { title: 'Crear Artista' }) %>
+<%- include('../../partials/sidebar', { admin: admin }) %>
 
-<form method="POST" action="/admin/artists">
-    <div class="mb-3">
-        <label class="form-label">Nombre</label>
-        <input type="text" class="form-control" name="name" required>
-    </div>
-    
-    <div class="mb-3">
-        <label class="form-label">URL de la Foto</label>
-        <input type="url" class="form-control" name="photo" required>
-    </div>
-    
-    <button type="submit" class="btn btn-primary">Crear Artista</button>
-    <a href="/admin/artists" class="btn btn-secondary">Cancelar</a>
-</form>
+<div class="col-md-10 col-lg-10 main-content mt-4">
+   <% if (success_msg && success_msg.length > 0) { %>
+    <div class="alert alert-success"><%= success_msg[0] %></div>
+  <% } %>
+  <% if (error_msg && error_msg.length > 0) { %>
+    <div class="alert alert-danger"><%= error_msg[0] %></div>
+  <% } %>
+    <h1>Crear Nuevo Artista</h1>
+    <form method="POST" action="/admin/artists/create">
+        <div class="mb-3">
+            <label class="form-label">Nombre</label>
+            <input type="text" class="form-control" name="name" required>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label">URL de la Foto</label>
+            <input type="url" class="form-control" name="photo" required>
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Crear Artista</button>
+        <a href="/admin/artists" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+
+<%- include('../../partials/footer') %>

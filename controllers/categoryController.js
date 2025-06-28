@@ -46,10 +46,12 @@ const updateCategory = async (req, res) => {
     const categoryId = req.params.id;
     const { name } = req.body;
     const updatedCategory = await categoryModel.updateCategory(categoryId, name);
-    res.json(updatedCategory);
+    req.flash('success_msg', 'Categoría actualizada exitosamente');
+    return res.redirect('/admin/categories');
   } catch (error) {
     console.error('Error al actualizar categoría:', error);
-    res.status(500).json({ error: 'Error al actualizar categoría' });
+    req.flash('error_msg', 'Error al actualizar categoría');
+    return res.redirect('/admin/categories');
   }
 };
 

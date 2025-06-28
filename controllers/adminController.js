@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const db = require('../config/db');
 const artistModel = require('../models/artist');
 const categoryModel = require('../models/categoryModel');
+const songModel = require('../models/songModel');
 
 const getLogin = (req, res) => {
   res.render('auth/login', { layout: false });
@@ -125,7 +126,9 @@ const showCreateSongForm = async (req, res) => {
       title: 'Crear Canción',
       artists,
       categories,
-      admin: req.session.admin 
+      admin: req.session.admin ,
+      success_msg: req.flash('success_msg')[0],
+      error_msg: req.flash('error_msg')[0]
     });
   } catch (error) {
     console.error('Error al mostrar formulario de creación de canción:', error);
@@ -134,25 +137,65 @@ const showCreateSongForm = async (req, res) => {
   }
 };
 
-const showEditSongForm = (req, res) => {
-  res.render('admin/songs/edit', { 
-    title: 'Editar Canción',
-    songId: req.params.id 
-  });
+const showEditSongForm = async (req, res) => {
+  try {
+    const songId = req.params.id;
+    console.log('📥 ID recibido en ruta:', songId);
+
+    const song = await songModel.getSongById(songId);
+
+    const artists = await artistModel.getAllArtists();
+    const categories = await categoryModel.getAllCategories();
+
+
+    res.render('admin/songs/edit', {
+      title: 'Editar Canción',
+      song,
+      artists,
+      categories,
+      admin: req.session.admin,
+      success_msg: req.flash('success_msg'),
+      error_msg: req.flash('error_msg')
+    });
+  } catch (error) {
+    console.error('❌ Error al cargar canción para editar:', error);
+    req.flash('error_msg', 'Error al cargar la canción');
+    res.redirect('/admin/songs');
+  }
 };
+
 
 const showCreateArtistForm = (req, res) => {
   res.render('admin/artists/create', { 
     title: 'Crear Artista',
-    admin: req.session.admin 
+    admin: req.session.admin,
+    success_msg: req.flash('success_msg')[0],
+    error_msg: req.flash('error_msg')[0]
   });
 };
 
-const showEditArtistForm = (req, res) => {
-  res.render('admin/artist/edit', { 
-    title: 'Editar Artista',
-    artistId: req.params.id 
-  });
+const showEditArtistForm = async (req, res) => {
+  try {
+    const artistId = req.params.id;
+    const artist = await artistModel.getArtistByIdWithSongs(artistId);
+
+    if (!artist) {
+      req.flash('error_msg', 'Artista no encontrado');
+      return res.redirect('/admin/artists');
+    }
+
+    res.render('admin/artists/edit', { 
+      title: 'Editar Artista',
+      artist, 
+      admin: req.session.admin,
+      success_msg: req.flash('success_msg')[0],
+      error_msg: req.flash('error_msg')[0]
+    });
+  } catch (error) {
+    console.error('Error al cargar el formulario de edición de artista:', error);
+    req.flash('error_msg', 'Error al cargar el artista');
+    res.redirect('/admin/artists');
+  }
 };
 
 const showArtists = async (req, res) => {
@@ -162,7 +205,9 @@ const showArtists = async (req, res) => {
     res.render('admin/artists/list', {
       title: 'Artistas',
       artists,
-      admin: req.session.admin 
+      admin: req.session.admin,
+      success_msg: req.flash('success_msg')[0],
+      error_msg: req.flash('error_msg')[0] 
     });
   } catch (error) {
     console.error('Error al mostrar artistas:', error);
@@ -174,7 +219,9 @@ const showArtists = async (req, res) => {
 const showCreateCategoryForm = (req, res) => {
   res.render('admin/category/create', {
     title: 'Crear Categoria',
-    admin: req.session.admin
+    admin: req.session.admin,
+    success_msg: req.flash('success_msg')[0],
+    error_msg: req.flash('error_msg')[0]
   });
 };
 
@@ -185,7 +232,9 @@ const showCategories = async (req, res) => {
     res.render('admin/category/list', {
       title: 'Categorías',
       categories,
-      admin: req.session.admin
+      admin: req.session.admin,
+      success_msg: req.flash('success_msg')[0],
+      error_msg: req.flash('error_msg')[0]
     });
   } catch (error) {
     console.error('Error al mostrar categorías:', error);
@@ -194,11 +243,28 @@ const showCategories = async (req, res) => {
   }
 };
 
-const showEditCategoryForm = (req, res) => {
-  res.render('admin/category/edit', { 
-    title: 'Editar Categoria',
-    categoryId: req.params.id 
-  });
+const showEditCategoryForm = async (req, res) => {
+  try {
+    const categoryId = req.params.id;
+    const category = await categoryModel.getCategoryById(categoryId);
+
+    if (!category) {
+      req.flash('error_msg', 'Categoría no encontrada');
+      return res.redirect('/admin/categories');
+    }
+
+    res.render('admin/category/edit', {
+      title: 'Editar Categoría',
+      category,
+      admin: req.session.admin,
+      success_msg: req.flash('success_msg')[0],
+      error_msg: req.flash('error_msg')[0]
+    });
+  } catch (error) {
+    console.error('Error al cargar la categoría para editar:', error);
+    req.flash('error_msg', 'Error al cargar la categoría');
+    res.redirect('/admin/categories');
+  }
 };
 
 module.exports = {

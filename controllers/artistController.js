@@ -7,10 +7,12 @@ const createArtist = async (req, res) => {
   try {
     const { name, photo } = req.body;
     const newArtist = await artistModel.createArtist(name, photo);
-    res.status(201).json(newArtist);
+    req.flash('success_msg', 'Artista creado exitosamente');
+    res.redirect('/admin/artists');
   } catch (error) {
     console.error('Error al crear artista:', error);
-    res.status(500).json({ error: 'Error al crear artista' });
+    req.flash('error_msg', 'Error al crear artista');
+    res.redirect('/admin/artists/create');
   }
 };
 
@@ -19,11 +21,13 @@ const updateArtist = async (req, res) => {
   try {
     const artistId = req.params.id;
     const { name, photo } = req.body;
-    const updatedArtist = await artistModel.updateArtist(artistId, name, photo);
-    res.json(updatedArtist);
+    await artistModel.updateArtist(artistId, name, photo);
+    req.flash('success_msg', 'Artista actualizado correctamente');
+    res.redirect('/admin/artists');
   } catch (error) {
     console.error('Error al actualizar artista:', error);
-    res.status(500).json({ error: 'Error al actualizar artista' });
+    req.flash('error_msg', 'Error al actualizar artista');
+    res.redirect(`/admin/artists/edit/${req.params.id}`);
   }
 };
 

@@ -43,47 +43,42 @@ const createSong = async (songData) => {
 
 // Actualizar una canción
 const updateSong = async (songId, songData) => {
-  try {
-    const { title, album, path_song, image_path, duration, artistIds, categoryIds } = songData;
+  const {
+    title,
+    album,
+    duration,
+    path_song,
+    image_path,
+    artistIds = [],
+    categoryIds = []
+  } = songData;
 
-    // Actualizar canción
-    const [result] = await db.execute(
-      `UPDATE song 
-       SET title = ?, album = ?, path_song = ?, image_path = ?, duration = ?
-       WHERE id = ?`,
-      [title, album, path_song, image_path, duration, songId]
+  try {
+    // 1. Actualiza los datos básicos de la canción
+    await db.query(
+      `UPDATE song SET title = ?, album = ?, duration = ?, path_song = ?, image_path = ? WHERE id = ?`,
+      [title, album, duration, path_song, image_path, songId]
     );
 
-    if (result.affectedRows === 0) {
-      throw new Error('Canción no encontrada');
+    // 2. Limpia relaciones anteriores
+    await db.query(`DELETE FROM song_artist WHERE song_id = ?`, [songId]);
+    await db.query(`DELETE FROM song_category WHERE song_id = ?`, [songId]);
+
+    // 3. Inserta nuevos artistas
+    for (const artistId of artistIds) {
+      await db.query(`INSERT INTO song_artist (song_id, artist_id) VALUES (?, ?)`, [songId, artistId]);
     }
 
-    // Actualizar artistas
-    await db.execute('DELETE FROM song_artist WHERE song_id = ?', [songId]);
-    if (artistIds && artistIds.length > 0) {
-      for (const artistId of artistIds) {
-        await db.execute(
-          'INSERT INTO song_artist (song_id, artist_id) VALUES (?, ?)',
-          [songId, artistId]
-        );
-      }
+    // 4. Inserta nuevas categorías
+    for (const categoryId of categoryIds) {
+      await db.query(`INSERT INTO song_category (song_id, category_id) VALUES (?, ?)`, [songId, categoryId]);
     }
 
-    // Actualizar categorías
-    await db.execute('DELETE FROM song_category WHERE song_id = ?', [songId]);
-    if (categoryIds && categoryIds.length > 0) {
-      for (const categoryId of categoryIds) {
-        await db.execute(
-          'INSERT INTO song_category (song_id, category_id) VALUES (?, ?)',
-          [songId, categoryId]
-        );
-      }
-    }
+    return { message: 'Canción actualizada con éxito' };
 
-    return { id: songId, ...songData };
-  } catch (error) {
-    console.error('Error al actualizar canción:', error);
-    throw error;
+  } catch (err) {
+    console.error('❌ Error en updateSong:', err);
+    throw err;
   }
 };
 
@@ -141,33 +136,44 @@ const getAllSongs = async () => {
 // Obtener una canción por ID con sus datos asociados
 const getSongById = async (songId) => {
   try {
-    const [results] = await db.query(`
-      SELECT 
-        song.id, 
-        song.title, 
-        song.album, 
-        song.duration,
-        song.path_song, 
-        song.image_path, 
-        MAX(artist.name) AS artist_name, 
-        MAX(artist.photo) AS artist_photo, 
-        GROUP_CONCAT(DISTINCT category.name SEPARATOR ', ') AS category_name, 
-        MAX(playlist.title) AS playlist_title
+    const [songResult] = await db.query(`
+      SELECT id, title, album, duration, path_song, image_path
       FROM song
-      LEFT JOIN song_artist ON song.id = song_artist.song_id
-      LEFT JOIN artist ON song_artist.artist_id = artist.id
-      LEFT JOIN song_category ON song.id = song_category.song_id
-      LEFT JOIN category ON song_category.category_id = category.id
-      LEFT JOIN playlist ON song.playlist_id = playlist.id
-      WHERE song.id = ?
-      GROUP BY song.id, song.title, song.album, song.path_song, song.image_path
+      WHERE id = ?
     `, [songId]);
-    return results[0];
+
+    if (songResult.length === 0) {
+      return null;
+    }
+
+    const song = songResult[0];
+
+    // 🔽 Buscamos los artistIds asociados
+    const [artistRows] = await db.query(`
+      SELECT artist_id FROM song_artist WHERE song_id = ?
+    `, [songId]);
+
+    const artistIds = artistRows.map(row => row.artist_id);
+
+    // 🔽 Buscamos los categoryIds asociados
+    const [categoryRows] = await db.query(`
+      SELECT category_id FROM song_category WHERE song_id = ?
+    `, [songId]);
+
+    const categoryIds = categoryRows.map(row => row.category_id);
+
+    // 🔁 Combinamos todo
+    return {
+      ...song,
+      artistIds,
+      categoryIds
+    };
   } catch (error) {
-    console.error('Error al obtener la canción:', error);
+    console.error('Error en getSongById:', error);
     throw error;
   }
 };
+
 
 // Función para agregar una canción (sin playlist)
 const addSong = (songData, callback) => {

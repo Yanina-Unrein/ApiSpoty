@@ -123,6 +123,9 @@ const checkAdminSession = (req, res, next) => {
   }
 };
 
+// Servir archivos estáticos desde /public
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Configuración de archivos estáticos con CORS dinámico
 app.use('/public/songs', express.static(path.join(__dirname, 'public', 'songs'), {
   setHeaders: (res, filePath) => {
@@ -132,6 +135,7 @@ app.use('/public/songs', express.static(path.join(__dirname, 'public', 'songs'),
     }
   }
 }));
+
 
 // --------------------- Rutas ---------------------
 

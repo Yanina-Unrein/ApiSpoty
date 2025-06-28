@@ -1,16 +1,34 @@
-<h2 class="mb-4"><%= title %></h2>
+<%- include('../../partials/header', { title: 'Editar Artista' }) %>
+<%- include('../../partials/sidebar', { admin: admin }) %>
 
-<form method="POST" action="/admin/artists/update/<%= artist.id %>">
-    <div class="mb-3">
-        <label class="form-label">Nombre</label>
-        <input type="text" class="form-control" name="name" value="<%= artist.name %>" required>
+<div class="col-md-10 col-lg-10 main-content">
+    <% if (success_msg && success_msg.length > 0) { %>
+        <div class="alert alert-success"><%= success_msg[0] %></div>
+    <% } %>
+    <% if (error_msg && error_msg.length > 0) { %>
+        <div class="alert alert-danger"><%= error_msg[0] %></div>
+    <% } %>
+    <div class="pb-2 mb-3 border-bottom">
+        <h1 class="title-w">Editar Artista</h1>
     </div>
-    
-    <div class="mb-3">
-        <label class="form-label">URL de la Foto</label>
-        <input type="url" class="form-control" name="photo" value="<%= artist.photo %>" required>
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" action="/admin/artists/update/<%= artist.id %>">
+                <div class="mb-3">
+                    <label class="form-label">Nombre</label>
+                    <input type="text" class="form-control" name="name" value="<%= artist.name %>" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">URL de la Foto</label>
+                    <input type="url" class="form-control" name="photo" value="<%= artist.photo %>" required>
+                </div>
+                
+                <button type="submit" class="btn btn-spotify">Actualizar Artista</button>
+                <a href="/admin/artists" class="btn btn-secondary">Cancelar</a>
+            </form>
+        </div>
     </div>
-    
-    <button type="submit" class="btn btn-primary">Actualizar Artista</button>
-    <a href="/admin/artists" class="btn btn-secondary">Cancelar</a>
-</form>
+</div>
+
+<%- include('../../partials/footer') %>

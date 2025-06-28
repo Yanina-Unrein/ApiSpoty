@@ -1,29 +1,78 @@
-<%- include('../partials/header', { title: 'Editar Canción' }) %>
+<%- include('../../partials/header', { title: 'Editar Canción' }) %>
+<%- include('../../partials/sidebar', { admin: admin }) %>
 
-<h1>Editar Canción</h1>
+<div class="col-md-10 col-lg-10 main-content">
+  <% if (success_msg && success_msg[0]) { %>
+    <div class="alert alert-success"><%= success_msg[0] %></div>
+  <% } %>
 
-<% if (error_msg) { %>
-  <div class="alert alert-danger"><%= error_msg %></div>
-<% } %>
+  <% if (error_msg && error_msg[0]) { %>
+    <div class="alert alert-danger"><%= error_msg[0] %></div>
+  <% } %>
+   <div class="pb-2 mb-3 border-bottom">
+      <h1 class="title-w">Editar Canción</h1>
+    </div>
+    <div class="card">
+      <div class="card-body">
+        <form action="/admin/songs/update/<%= song.id %>" method="POST">
+          
+          <div class="mb-3">
+            <label class="form-label">Título</label>
+            <input type="text" name="title" class="form-control" value="<%= song.title %>" required>
+          </div>
 
-<form action="/admin/songs/update/<%= songId %>" method="POST">
-  <div class="mb-3">
-    <label class="form-label">Título</label>
-    <input type="text" name="title" class="form-control" required>
-  </div>
-  
-  <div class="mb-3">
-    <label class="form-label">Artista</label>
-    <input type="text" name="artist" class="form-control">
-  </div>
-  
-  <div class="mb-3">
-    <label class="form-label">Duración (mm:ss)</label>
-    <input type="text" name="duration" class="form-control" placeholder="3:45" required>
-  </div>
-  
-  <button type="submit" class="btn btn-primary">Actualizar Canción</button>
-  <a href="/admin/songs" class="btn btn-secondary">Cancelar</a>
-</form>
+          <div class="mb-3">
+            <label class="form-label">Álbum</label>
+            <input type="text" name="album" class="form-control" value="<%= song.album %>">
+          </div>
 
-<%- include('../partials/footer') %>
+          <div class="mb-3">
+            <label class="form-label">Duración</label>
+            <input type="text" name="duration" class="form-control" value="<%= song.duration %>" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">URL de la Imagen</label>
+            <input type="url" name="image_path" class="form-control" value="<%= song.image_path %>">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Artistas</label>
+            <select name="artistIds" class="form-control" multiple required>
+              <% artists.forEach(artist => { %>
+                <option value="<%= artist.id %>" <%= song.artistIds.includes(artist.id) ? 'selected' : '' %>>
+                  <%= artist.name %>
+                </option>
+              <% }) %>
+            </select>
+            <small class="form-text text-muted">Presioná Ctrl (Windows) o Cmd (Mac) para seleccionar múltiples.</small>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Categorías</label>
+            <select name="categoryIds" class="form-control" multiple>
+              <% categories.forEach(category => { %>
+                <option value="<%= category.id %>" 
+                  <%= song.categoryIds.includes(category.id) ? 'selected' : '' %>>
+                  <%= category.name %>
+                </option>
+              <% }) %>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Nombre del archivo MP3</label>
+            <input type="text" name="path_song" class="form-control" value="<%= song.path_song %>" required>
+            <small class="form-text text-muted">El archivo debe estar en /public/songs/</small>
+          </div>
+
+          <button type="submit" class="btn btn-spotify">Actualizar Canción</button>
+          <a href="/admin/songs" class="btn btn-secondary">Cancelar</a>
+        </form>
+      </div>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>
+
+

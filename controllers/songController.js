@@ -31,14 +31,26 @@ const createSong = async (req, res) => {
 const updateSong = async (req, res) => {
   try {
     const songId = req.params.id;
-    const songData = req.body;
-    const updatedSong = await songModel.updateSong(songId, songData);
-    res.json(updatedSong);
+    let { title, album, duration, path_song, image_path, artistIds, categoryIds } = req.body;
+
+    // Asegurar que siempre sean arrays
+    artistIds = artistIds ? (Array.isArray(artistIds) ? artistIds : [artistIds]) : [];
+    categoryIds = categoryIds ? (Array.isArray(categoryIds) ? categoryIds : [categoryIds]) : [];
+
+    const updatedSong = await songModel.updateSong(songId, {
+      title,
+      album,
+      duration,
+      path_song,
+      image_path,
+      artistIds,
+      categoryIds
+    });
+
     req.flash('success_msg', 'Canción actualizada exitosamente');
     res.redirect('/admin/songs');
   } catch (error) {
     console.error('Error al actualizar canción:', error);
-    res.status(500).json({ error: 'Error al actualizar canción' });
     req.flash('error_msg', 'Error al actualizar canción: ' + error.message);
     res.redirect(`/admin/songs/edit/${req.params.id}`);
   }

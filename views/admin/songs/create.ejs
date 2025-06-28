@@ -1,64 +1,70 @@
 <%- include('../../partials/header', { title: 'Crear Canción' }) %>
 <%- include('../../partials/sidebar', { admin: admin }) %>
 
-<div class="col-md-10 col-lg-10 main-content mt-4">
-   <% if (success_msg && success_msg.length > 0) { %>
-    <div class="alert alert-success"><%= success_msg[0] %></div>
+<div class="col-md-10 col-lg-10 main-content">
+  <% if (success_msg) { %>
+  <div class="alert alert-success"><%= success_msg %></div>
   <% } %>
-  <% if (error_msg && error_msg.length > 0) { %>
-    <div class="alert alert-danger"><%= error_msg[0] %></div>
+  <% if (error_msg) { %>
+    <div class="alert alert-danger"><%= error_msg %></div>
   <% } %>
-  <h1>Crear Nueva Canción</h1>
-  <form action="/admin/songs/create" method="POST">
-    <div class="mb-3">
-      <label class="form-label">Título</label>
-      <input type="text" name="title" class="form-control" required>
-    </div>
+  <div class="pb-2 mb-3 border-bottom">
+    <h1 class="title-w">Crear Nueva Canción</h1>
+  </div>
+<div class="card">
+  <div class="card-body">
+      <form action="/admin/songs/create" method="POST">
+        <div class="mb-3">
+          <label class="form-label">Título</label>
+          <input type="text" name="title" class="form-control" required>
+        </div>
 
-    <div class="mb-3">
-      <label class="form-label">Álbum</label>
-      <input type="text" name="album" class="form-control">
-    </div>
+        <div class="mb-3">
+          <label class="form-label">Álbum</label>
+          <input type="text" name="album" class="form-control">
+        </div>
 
-    <div class="mb-3">
-      <label class="form-label">Duración</label>
-      <input type="text" name="duration" class="form-control" placeholder="3:45" required>
-    </div>
+        <div class="mb-3">
+          <label class="form-label">Duración</label>
+          <input type="text" name="duration" class="form-control" placeholder="3:45" required>
+        </div>
 
-    <div class="mb-3">
-      <label class="form-label">URL de la Imagen</label>
-      <input type="url" name="image_path" class="form-control" placeholder="https://example.com/imagen.jpg">
-      <small class="form-text text-muted">Pegá la URL de la imagen que representa la canción.</small>
-    </div>
+        <div class="mb-3">
+          <label class="form-label">URL de la Imagen</label>
+          <input type="url" name="image_path" class="form-control" placeholder="https://example.com/imagen.jpg">
+          <small class="form-text text-muted">Pegá la URL de la imagen que representa la canción.</small>
+        </div>
 
-    <div class="mb-3">
-      <label class="form-label">Artistas</label>
-      <select name="artistIds" class="form-control" multiple required>
-        <% artists.forEach(artist => { %>
-          <option value="<%= artist.id %>"><%= artist.name %></option>
-        <% }) %>
-      </select>
-      <small class="form-text text-muted">Presioná Ctrl (Windows) o Cmd (Mac) para seleccionar múltiples.</small>
-    </div>
+        <div class="mb-3">
+          <label class="form-label">Artistas</label>
+          <select name="artistIds" class="form-control" multiple required>
+            <% artists.forEach(artist => { %>
+              <option value="<%= artist.id %>"><%= artist.name %></option>
+            <% }) %>
+          </select>
+          <small class="form-text text-muted">Presioná Ctrl (Windows) o Cmd (Mac) para seleccionar múltiples.</small>
+        </div>
 
-    <div class="mb-3">
-      <label class="form-label">Categorías</label>
-      <select name="categoryIds" class="form-control" multiple>
-        <% categories.forEach(category => { %>
-          <option value="<%= category.id %>"><%= category.name %></option>
-        <% }) %>
-      </select>
-    </div>
+        <div class="mb-3">
+          <label class="form-label">Categorías</label>
+          <select name="categoryIds" class="form-control" multiple>
+            <% categories.forEach(category => { %>
+              <option value="<%= category.id %>"><%= category.name %></option>
+            <% }) %>
+          </select>
+        </div>
 
-    <div class="mb-3">
-      <label class="form-label">Nombre del archivo MP3 (sin ruta)</label>
-      <input type="text" name="path_song" class="form-control" placeholder="ej: mi-cancion.mp3" required>
-      <small class="form-text text-muted">El archivo debe estar en /public/songs/</small>
-    </div>
+        <div class="mb-3">
+          <label class="form-label">Nombre del archivo MP3 (sin ruta)</label>
+          <input type="text" name="path_song" class="form-control" placeholder="ej: mi-cancion.mp3" required>
+          <small class="form-text text-muted">El archivo debe estar en /public/songs/</small>
+        </div>
 
-    <button type="submit" class="btn btn-primary">Crear Canción</button>
-    <a href="/admin/songs" class="btn btn-secondary">Cancelar</a>
-  </form>
+        <button type="submit" class="btn btn-spotify">Crear Canción</button>
+        <a href="/admin/songs" class="btn btn-secondary">Cancelar</a>
+      </form>
+    </div>
+  </div>
 </div>
 
 <%- include('../../partials/footer') %>

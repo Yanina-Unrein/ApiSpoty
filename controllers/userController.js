@@ -66,6 +66,32 @@ module.exports = {
     }
   },
 
+  deleteAccount: async (req, res) => {
+    const { id } = req.user;
+
+    try {
+      const user = await userModel.findById(id);
+      
+      if (user?.profile_image) {
+        try {
+          await deleteFromCloudinary(user.profile_image);
+        } catch (deleteError) {
+          console.error('Error al eliminar imagen:', deleteError);
+        }
+      }
+
+      const deleted = await userModel.deleteUser(id);
+      if (!deleted) {
+        return res.status(404).json({ error: 'Usuario no encontrado' });
+      }
+
+      res.json({ message: 'Cuenta eliminada correctamente' });
+    } catch (error) {
+      console.error('Error al eliminar cuenta:', error);
+      res.status(500).json({ error: 'Error al eliminar cuenta' });
+    }
+  },
+
   // Obtener todos los usuarios (solo admin)
   getAllUsers: async (req, res) => {
     try {

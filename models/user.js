@@ -57,6 +57,14 @@ module.exports = {
     return this.getUserById(userId);
   },
 
+  deleteUser: async (userId) => {
+    const [result] = await db.execute(
+      `DELETE FROM user WHERE id = ?`,
+      [userId]
+    );
+    return result.affectedRows > 0;
+  },
+
   // Obtener todos los usuarios (solo admin)
   getAllUsers: async () => {
     const [users] = await db.execute(`

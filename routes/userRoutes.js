@@ -8,13 +8,19 @@ const upload = require('../config/multer');
 router.use(authenticate);
 
 // Perfil del usuario actual
-router.get('/perfil', userController.getProfile);
-router.put('/perfil', userController.updateProfile);
-router.put('/perfil/password', userController.changeUserPassword);
+router.get('/perfil', authenticate, userController.getProfile);
+router.put('/perfil', authenticate, userController.updateProfile);
+router.put('/perfil/password', authenticate, userController.changeUserPassword);
 router.post(
   '/perfil/image',
   upload.single('profileImage'),
+  authenticate,
   userController.uploadProfileImage
+);
+
+router.delete('/eliminar-cuenta', 
+  authenticate, 
+  userController.deleteAccount
 );
 
 // Rutas de administrador

@@ -7,6 +7,31 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+const extractPublicId = (url) => {
+  if (!url) return null;
+  
+  try {
+    // Extraer public_id desde URL de Cloudinary
+    const matches = url.match(/\/v\d+\/(.+)\.\w+$/);
+    if (matches && matches[1]) {
+      return matches[1];
+    }
+    
+    // Intentar con otro formato común
+    const pathParts = url.split('/');
+    const uploadIndex = pathParts.indexOf('upload');
+    if (uploadIndex !== -1 && pathParts.length > uploadIndex + 2) {
+      return pathParts.slice(uploadIndex + 2).join('/').split('.')[0];
+    }
+    
+    console.error('URL de Cloudinary inválida:', url);
+    return null;
+  } catch (e) {
+    console.error('Error extrayendo public_id:', e);
+    return null;
+  }
+};
+
 const uploadToCloudinary = (buffer) => {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
@@ -37,18 +62,25 @@ const uploadToCloudinary = (buffer) => {
 };
 
 const deleteFromCloudinary = async (url) => {
-   try {
-        // Extraer public_id de la URL
-        const parts = url.split('/');
-        const folderIndex = parts.indexOf('profiles');
-        const publicIdParts = parts.slice(folderIndex + 1);
-        const publicId = publicIdParts.join('/').split('.')[0];
-        
-        await cloudinary.uploader.destroy(`spotify-clone/profiles/${publicId}`);
-    } catch (error) {
-        console.error('Error deleting from Cloudinary:', error);
-        throw error;
+  try {
+    // Expresión regular mejorada para extraer el public_id
+    const publicId = extractPublicId(url);
+    
+    if (!publicId) {
+      throw new Error('URL de Cloudinary inválida: ' + url);
     }
+    
+    const result = await cloudinary.uploader.destroy(publicId);
+    
+    if (result.result !== 'ok') {
+      throw new Error('Error al eliminar la imagen: ' + JSON.stringify(result));
+    }
+    
+    console.log(`Imagen eliminada: ${publicId}`);
+  } catch (error) {
+    console.error('Error deleting from Cloudinary:', error);
+    throw error;
+  }
 };
 
 const cleanUpCloudinary = async (userModel) => {
@@ -73,8 +105,10 @@ const cleanUpCloudinary = async (userModel) => {
   }
 };
 
+
 module.exports = {
   uploadToCloudinary,
   deleteFromCloudinary,
-  cleanUpCloudinary
+  cleanUpCloudinary,
+  extractPublicId
 };

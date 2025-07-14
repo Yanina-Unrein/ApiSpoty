@@ -1,4 +1,5 @@
 module.exports = (req, res, next) => {
+    console.log('🔐 Middleware admin ejecutado');
     if (!req.user) {
         return res.status(401).json({ 
             error: 'No autenticado' 

@@ -16,18 +16,47 @@ module.exports = {
     return user;
   },
 
-  // Actualizar perfil de usuario
-  updateUserProfile: async (userId, updateData) => {
-    const { first_name, last_name, username, email } = updateData;
-    
-    await db.execute(
-      `UPDATE user 
-       SET first_name = ?, last_name = ?, username = ?, email = ?
-       WHERE id = ?`,
-      [first_name, last_name, username, email, userId]
+  isEmailTaken: async (email, excludeUserId) => {
+    const [users] = await db.execute(
+      'SELECT id FROM user WHERE email = ? AND id != ?',
+      [email, excludeUserId]
     );
-    
-    return this.getUserById(userId);
+    return users.length > 0;
+  },
+
+  // Actualizar perfil de usuario
+  updateUserName: async (userId, first_name, last_name) => {
+    const fields = [];
+    const values = [];
+
+    if (first_name !== undefined) {
+      fields.push('first_name = ?');
+      values.push(first_name);
+    }
+    if (last_name !== undefined) {
+      fields.push('last_name = ?');
+      values.push(last_name);
+    }
+
+    if (fields.length === 0) {
+      // No hay campos para actualizar, devolvemos usuario sin cambios
+      return module.exports.getUserById(userId);
+    }
+
+    values.push(userId);
+    const sql = `UPDATE user SET ${fields.join(', ')} WHERE id = ?`;
+
+    await db.execute(sql, values);
+    return module.exports.getUserById(userId);
+  },
+
+  // Actualizar solo el email
+  updateUserEmail: async (userId, email) => {
+    await db.execute(
+      `UPDATE user SET email = ? WHERE id = ?`,
+      [email, userId]
+    );
+    return module.exports.getUserById(userId);
   },
 
   // Cambiar contraseña

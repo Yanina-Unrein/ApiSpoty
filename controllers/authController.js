@@ -12,12 +12,11 @@ const {
 // Generar token JWT (ya está correctamente definida)
 const generateAuthToken = (user) => {
   return jwt.sign(
-    { 
-      userId: user.id,
-      role: user.role 
+    {
+      id: user.id, 
     },
     process.env.JWT_SECRET_KEY,
-    { expiresIn: '24h' }
+    { expiresIn: '1h' }
   );
 };
 
@@ -38,10 +37,16 @@ const register = async (req, res) => {
     const newUser = users[0];
     
     const token = generateAuthToken(newUser);
+    const refreshToken = jwt.sign(
+      { id: newUser.id },
+      process.env.REFRESH_TOKEN_SECRET,
+      { expiresIn: '7d' }
+    );
 
     res.status(201).json({
       message: 'Usuario registrado exitosamente',
       token,
+      refreshToken,
       user: {
         id: newUser.id,
         first_name: newUser.first_name,
@@ -73,10 +78,16 @@ const login = async (req, res) => {
 
     const user = await verifyUser(email, password);
     const token = generateAuthToken(user);
+    const refreshToken = jwt.sign(
+      { id: user.id },
+      process.env.REFRESH_TOKEN_SECRET,
+      { expiresIn: '7d' }
+    );
 
     res.json({
       message: 'Login exitoso',
       token,
+      refreshToken,
       user: {
         id: user.id,
         first_name: user.first_name,
@@ -165,10 +176,62 @@ const checkEmail = async (req, res) => {
   }
 };
 
+const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    if (!refreshToken) {
+      return res.status(401).json({ error: 'Refresh token requerido' });
+    }
+    
+    // Verificar refresh token
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+
+    // CLAVE: Usar userId consistentemente
+    const userId = decoded.id;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Token inválido: falta user ID' });
+    }
+
+    // Buscar usuario
+    const [users] = await db.execute('SELECT * FROM user WHERE id = ?', [userId]);
+    
+    if (!users || users.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+    
+    const user = users[0];
+
+    // Generar NUEVOS tokens con funciones centralizadas
+    const newAccessToken = generateAuthToken(user);
+    const newRefreshToken = jwt.sign(
+      { id: user.id },
+      process.env.REFRESH_TOKEN_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      token: newAccessToken,
+      refreshToken: newRefreshToken
+    });
+
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Refresh token expirado' });
+    }
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ error: 'Refresh token inválido' });
+    }
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
 module.exports = {
   register,
   login,
   forgotPassword,
   resetPassword,
-  checkEmail
+  checkEmail,
+  refreshToken
 };

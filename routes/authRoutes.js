@@ -6,7 +6,8 @@ const {
   login,
   forgotPassword,
   resetPassword,
-  checkEmail
+  checkEmail,
+  refreshToken
 } = require('../controllers/authController');
 
 // Autenticación
@@ -27,5 +28,7 @@ router.get('/perfil', authenticate, (req, res) => {
 });
 
 router.post('/check-email', checkEmail);
+
+router.post('/refresh-token', refreshToken);
 
 module.exports = router;

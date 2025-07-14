@@ -1,14 +1,10 @@
 const express = require('express');
 const dotenv = require('dotenv');
-const bodyParser = require('body-parser');
 const http = require('http');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs'); 
-const db = require('./config/db'); 
 const cron = require('node-cron');
-const cloudinary = require('cloudinary').v2;
-const methodOverride = require('method-override');
 
 const songRoutes = require('./routes/songRoutes'); 
 const authRoutes = require('./routes/authRoutes'); 
@@ -29,10 +25,11 @@ const app = express();
 // --------------------- Middlewares ---------------------
 
 const allowedOrigins = [
+  'https://apispoty.onrender.com',
   'https://spoty-music-clon.vercel.app',
   /https:\/\/spoty-music-clon-.*\.vercel\.app/,
   'http://localhost:4200',
-  'http://localhost:3000'
+  'http://localhost:3008'
 ];
 
 // Configuración de CORS para producción y desarrollo

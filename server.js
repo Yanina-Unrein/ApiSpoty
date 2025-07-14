@@ -89,6 +89,8 @@ app.set('views', path.join(__dirname, 'views'));
 
 const isProduction = process.env.NODE_ENV === 'production';
 
+app.set('trust proxy', 1);
+
 // Configurar sesiones para autenticación
 const session = require('express-session');
 app.use(session({
